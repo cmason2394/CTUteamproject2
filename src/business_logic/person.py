@@ -1,3 +1,5 @@
+# person.py
+
 class Person:
     def __init__(self, name, contact_info, username, password):
         """
@@ -5,11 +7,12 @@ class Person:
 
         Args:
             name (str): The person's full name.
-            date_of_birth (str): The person's date of birth.
+            date_of_birth (date dd:mm:yyyy): The person's date of birth.
             contact_info (str): The person's contact information (e.g., email, phone number).
             username (str): The unique username for logging into the system.
             password (str): The password associated with the username.
         """
+        self._id = None  # Will be populated by the database upon creation
         self.name = name
         self.contact_info = contact_info
         self.username = username
