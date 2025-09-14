@@ -7,7 +7,7 @@
 /.ipynb_checkpoints/ #jupyter notebooks
 
 # Python-specific ignores
-__pycache__/
+*/__pycache__/
 *.pyc
 
 # Environment and logs
