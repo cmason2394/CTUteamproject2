@@ -1,3 +1,15 @@
+import os
+from pymongo import MongoClient
+
+_client = None
+
+def get_db():
+  global _client
+  if _client is None:
+    mongo_uri = os.environ.get("MONGO_URI", "mongodb://localhost:27017/schooldb")
+    _client = MongoClient(mongo_uri)
+    return _client.get_database() # Returns school database
+
 def save_assignment(db_conn, teacher_id, class_id):
   cursor = db_conn.cursor()
   cursor.execute(
