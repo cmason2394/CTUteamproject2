@@ -45,4 +45,7 @@ dependencies:
   - wheel=0.45.1
   - xz=5.6.4
   - zlib=1.2.13
+  - Flask-JWT-Extended>=.4.4
+  - python-dotenv
+  - werkzeug
 prefix: C:\Users\cassi\miniconda3\envs\teamproject2-env
