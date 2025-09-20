@@ -2,10 +2,17 @@ import os
 from flask import Flask, request, jsonify
 from flask_pymongo import PyMongo
 from bson.objectid import ObjectId
+from flask_jwt_extended import JWTManager
+from parent_access import parent_bp
+
 app = Flask(__name__)
 app.config["MONGO_URI"] = os.environ.get("MONGO_URI", "mongodb://localhost:27017/schooldb")
 mongo = PyMongo(app)
 class_assignments = mongo.db.classAssignments
+app.config['JWT_SECRET_KEY'] = os.getenv('JWT_SECRET_KEY', 'change-me-in-prod')
+jwt = JWTManager(app)
+
+app.register_blueprint(parent_bp, url_prefix="/api")
 
 # Partial update endpoint for admin
 @app.route("/api/classAssignments/<id>", methods=["PUT"])
