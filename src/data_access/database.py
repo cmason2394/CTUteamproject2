@@ -1,26 +1,42 @@
 import os
-from pymongo import MongoClient
+import psycopg2
+import psycopg2.extras
 
-_client = None
+_conn = None
 
 def get_db():
-  global _client
-  if _client is None:
-    mongo_uri = os.environ.get("MONGO_URI", "mongodb://localhost:27017/schooldb")
-    _client = MongoClient(mongo_uri)
-    return _client.get_database() # Returns school database
+    """
+    Get or create a global PostgreSQL connection.
+    """
+    global _conn
+    if _conn is None:
+        pg_uri = os.environ.get("DATABASE_URL", "postgresql://postgres:password@localhost:5432/schooldb")
+        _conn = psycopg2.connect(pg_uri, cursor_factory=psycopg2.extras.RealDictCursor)
+
+        # Ensure the table exists
+        with _conn.cursor() as cur:
+            cur.execute("""
+                CREATE TABLE IF NOT EXISTS assignments (
+                    id SERIAL PRIMARY KEY,
+                    teacher_id INT NOT NULL,
+                    class_id INT NOT NULL
+                );
+            """)
+            _conn.commit()
+
+    return _conn
+
 
 def save_assignment(db_conn, teacher_id, class_id):
-  cursor = db_conn.cursor()
-  cursor.execute(
-    "INSERT INTO assignments ( teacher_id, class_id) VALUES (?, ?)",
-    (teacher_id, class_id)
-  )
-  db_conn.commit()
-def get_assignments_by_teacher(db_conn, teracher_id):
-  cursor = db_conn.cursor()
-  cursor.execute(
-    "SELECT class_id FROM assignment WHERE teacher_id = ?",
-    (teacher_id,)
-  )
-  return cursor.fetchall()   # SQLite code, will have to adapt if we use MongoDB or other database.
+    """
+    Insert a new assignment row.
+    """
+    with db_conn.cursor() as cur:
+        cur.execute(
+            "INSERT INTO assignments (teacher_id, class_id) VALUES (%s, %s)",
+            (teacher_id, class_id)
+        )
+        db_conn.commit()
+
+
+def get_assignments_by_teacher(db_
