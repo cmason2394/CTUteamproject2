@@ -3,7 +3,7 @@ import psycopg2
 import psycopg2.extras
 from flask import Flask, request, jsonify
 from flask_jwt_extended import JWTManager
-from parent_access import parent_bp
+from .parent_access import parent_bp
 
 app = Flask(__name__)
 

@@ -109,4 +109,4 @@ def associate_child():
     if not student or student.get("role") != "student":
         return jsonify({"msg": "Student not found"}), 404
     if student.get("share_code") != share_code:
-        return jsonify({"
+        return jsonify({""})
