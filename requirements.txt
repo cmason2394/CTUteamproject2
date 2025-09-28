@@ -1,0 +1,17 @@
+# Front-end and Utilities
+Flask
+Flask-JWT-Extended>=4.4.0
+python-dotenv
+werkzeug
+
+# Database Connector (PostgreSQL)
+psycopg2-binary
+sqlalchemy
+
+# Other Python Libraries
+cffi==1.17.1
+colorama==0.4.6
+cryptography==45.0.5
+dnspython==2.4.2
+idna==3.7
+pycparser==2.21
