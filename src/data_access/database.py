@@ -1,45 +1,75 @@
 import os
 import psycopg2
 import psycopg2.extras
-from dotenv import load_dotenv
+from contextlib import contextmanager
 
-load_dotenv() # loads .env file
+# Connection factory and context managers
+def _pg_dsn() -> str:
+    # Expect DATABASE_URL like: postgresql://user:pass@host:5432/schooldb
+    dsn = os.environ.get("DATABASE_URL")
+    if not dsn:
+        raise RuntimeError("DATABASE_URL is not set. Example: postgresql://postgres:pass@localhost:5432/schooldb")
+    return dsn + ("?connect_timeout=5" if "connect_timeout" not in dsn else "")
 
-_conn = None
+def _connect():
+    return psycopg2.connect(_pg_dsn(), cursor_factory=psycopg2.extras.RealDictCursor)
 
-def get_db():
+@contextmanager
+def get_conn():
+    conn = _connect()
+    try:
+        yield conn
+        conn.commit()
+    except Exception:
+        conn.rollback()
+        raise
+    finally:
+        conn.close()
+
+@contextmanager
+def get_cursor(conn=None):
+    owns = False
+    if conn is None:
+        conn = _connect()
+        owns = True
+    cur = conn.cursor()
+    try:
+        yield cur
+        if owns:
+            conn.commit()
+    except Exception:
+        if owns:
+            conn.rollback()
+        raise
+    finally:
+        cur.close()
+        if owns:
+            conn.close()
+
+# Business operations aligned to schema
+# Assign a teacher to a class (classes.teacher_id is the source of truth)
+def assign_teacher_to_class(class_id: int, teacher_id: int) -> None:
+    sql = "UPDATE classes SET teacher_id = %s WHERE id = %s"
+    with get_conn() as conn, get_cursor(conn) as cur:
+        cur.execute(sql, (teacher_id, class_id))
+
+# Fetch all classes for a teacher
+def get_classes_by_teacher(teacher_id: int):
+    sql = """
+        SELECT c.id, c.code, c.title, c.subject, c.term_id, c.room_id
+        FROM classes c
+        WHERE c.teacher_id = %s
+        ORDER BY c.id
     """
-    Get or create a global PostgreSQL connection.
-    """
-    global _conn
-    if _conn is None:
-        pg_uri = os.environ.get("DATABASE_URL", "postgresql://postgres:password@localhost:5432/schooldb")
-        _conn = psycopg2.connect(pg_uri, cursor_factory=psycopg2.extras.RealDictCursor)
+    with get_conn() as conn, get_cursor(conn) as cur:
+        cur.execute(sql, (teacher_id,))
+        return cur.fetchall()
 
-        # Ensure the table exists
-        with _conn.cursor() as cur:
-            cur.execute("""
-                CREATE TABLE IF NOT EXISTS assignments (
-                    id SERIAL PRIMARY KEY,
-                    teacher_id INT NOT NULL,
-                    class_id INT NOT NULL
-                );
-            """)
-            _conn.commit()
+# OPTIONAL: query teacher profile view if present
+def get_teacher_profile(teacher_id: int):
+    # v_teacher_profile is defined in 01_schema.sql
+    sql = "SELECT * FROM v_teacher_profile WHERE teacher_id = %s"
+    with get_conn() as conn, get_cursor(conn) as cur:
+        cur.execute(sql, (teacher_id,))
+        return cur.fetchone()
 
-    return _conn
-
-
-def save_assignment(db_conn, teacher_id, class_id):
-    """
-    Insert a new assignment row.
-    """
-    with db_conn.cursor() as cur:
-        cur.execute(
-            "INSERT INTO assignments (teacher_id, class_id) VALUES (%s, %s)",
-            (teacher_id, class_id)
-        )
-        db_conn.commit()
-
-
-#def get_assignments_by_teacher(db_

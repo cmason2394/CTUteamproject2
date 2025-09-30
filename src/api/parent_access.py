@@ -4,13 +4,13 @@ from werkzeug.security import generate_password_hash, check_password_hash
 import psycopg2
 import psycopg2.extras
 import os, secrets
-from src.data_access.database import get_db
+from src.data_access.database import get_conn
 from dotenv import load_dotenv
 
 load_dotenv()
 
 # Connect to PostgreSQL
-conn = get_db()
+conn = get_conn()
 
 parent_bp = Blueprint("parent", __name__)
 

@@ -3,13 +3,13 @@ import psycopg2
 import psycopg2.extras
 from flask import Flask, request, jsonify
 from flask_jwt_extended import JWTManager
-from src.data_access.database import get_db
+from src.data_access.database import get_conn
 from .parent_access import parent_bp
 
 app = Flask(__name__)
 
 # PostgreSQL connection
-conn = get_db()
+conn = get_conn()
 
 app.config['JWT_SECRET_KEY'] = os.getenv('JWT_SECRET_KEY', 'change-me-in-prod')
 jwt = JWTManager(app)
