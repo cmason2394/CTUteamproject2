@@ -4,13 +4,13 @@ from werkzeug.security import generate_password_hash, check_password_hash
 import psycopg2
 import psycopg2.extras
 import os, secrets
+from src.data_access.database import get_db
 from dotenv import load_dotenv
 
 load_dotenv()
 
 # Connect to PostgreSQL
-DATABASE_URL = os.getenv("DATABASE_URL", "postgresql://postgres:password@localhost:5432/schooldb")
-conn = psycopg2.connect(DATABASE_URL, cursor_factory=psycopg2.extras.RealDictCursor)
+conn = get_db()
 
 parent_bp = Blueprint("parent", __name__)
 

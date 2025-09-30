@@ -3,13 +3,13 @@ import psycopg2
 import psycopg2.extras
 from flask import Flask, request, jsonify
 from flask_jwt_extended import JWTManager
+from src.data_access.database import get_db
 from .parent_access import parent_bp
 
 app = Flask(__name__)
 
 # PostgreSQL connection
-DATABASE_URL = os.environ.get("DATABASE_URL", "postgresql://postgres:password@localhost:5432/schooldb")
-conn = psycopg2.connect(DATABASE_URL, cursor_factory=psycopg2.extras.RealDictCursor)
+conn = get_db()
 
 app.config['JWT_SECRET_KEY'] = os.getenv('JWT_SECRET_KEY', 'change-me-in-prod')
 jwt = JWTManager(app)

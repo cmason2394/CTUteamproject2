@@ -1,6 +1,9 @@
 import os
 import psycopg2
 import psycopg2.extras
+from dotenv import load_dotenv
+
+load_dotenv() # loads .env file
 
 _conn = None
 
@@ -39,4 +42,4 @@ def save_assignment(db_conn, teacher_id, class_id):
         db_conn.commit()
 
 
-def get_assignments_by_teacher(db_
+#def get_assignments_by_teacher(db_
