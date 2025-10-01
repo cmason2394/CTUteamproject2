@@ -1,0 +1,23 @@
+<!doctype html>
+<html lang="en">
+<head>
+    <title>Parent Dashboard</title>
+</head>
+<body>
+    <h1>Welcome to the Parent Dashboard!</h1>
+    <h2>Your Children</h2>
+    <ul>
+        {% for child in children %}
+            <li>
+                <strong>{{ child.name }}</strong> (Grade {{ child.grade }}): 
+                Classes:
+                <ul>
+                    {% for c in child.classes %}
+                        <li>{{ c }}</li>
+                    {% endfor %}
+                </ul>
+            </li>
+        {% endfor %}
+    </ul>
+</body>
+</html>

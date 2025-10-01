@@ -1,0 +1,36 @@
+<!doctype html>
+<html lang="en">
+<head>
+    <title>Login</title>
+</head>
+<body>
+    <h1>Login</h1>
+    <form action="/api/auth/login" method="post" id="loginForm">
+        <label>Email: <input type="email" name="email" required></label><br>
+        <label>Password: <input type="password" name="password" required></label><br>
+        <button type="submit">Login</button>
+    </form>
+    <div id="error"></div>
+    <script>
+    document.getElementById('loginForm').onsubmit = async function(e) {
+        e.preventDefault();
+        const form = e.target;
+        const payload = {
+            email: form.email.value,
+            password: form.password.value
+        };
+        const res = await fetch('/api/auth/login', {
+            method: 'POST',
+            headers: {'Content-Type': 'application/json'},
+            body: JSON.stringify(payload)
+        });
+        if (res.ok) {
+            window.location = '/api/dashboard';
+        } else {
+            const data = await res.json();
+            document.getElementById('error').innerText = data.msg || 'Login failed';
+        }
+    }
+    </script>
+</body>
+</html>
