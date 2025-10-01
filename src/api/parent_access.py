@@ -1,33 +1,29 @@
-from flask import Blueprint, request, jsonify
+from flask import Blueprint, request, jsonify, render_template, session, redirect, url_for
 from flask_jwt_extended import create_access_token, jwt_required, get_jwt_identity
 from werkzeug.security import generate_password_hash, check_password_hash
-import psycopg2
-import psycopg2.extras
-import os, secrets
+import secrets
 from src.data_access.database import get_conn
 from dotenv import load_dotenv
 
 load_dotenv()
-
-# Connect to PostgreSQL
-conn = get_conn()
 
 parent_bp = Blueprint("parent", __name__)
 
 # --- Helper queries ---
 def user_by_id(uid):
     try:
-        with conn.cursor() as cur:
-            cur.execute("SELECT * FROM users WHERE id = %s", (uid,))
-            return cur.fetchone()
+        with get_conn() as conn:
+            with conn.cursor() as cur:
+                cur.execute("SELECT * FROM users WHERE id = %s", (uid,))
+                return cur.fetchone()
     except Exception:
         return None
 
 def user_by_email(email):
-    with conn.cursor() as cur:
-        cur.execute("SELECT * FROM users WHERE email = %s", (email.lower(),))
-        return cur.fetchone()
-
+    with get_conn() as conn:
+        with conn.cursor() as cur:
+            cur.execute("SELECT * FROM users WHERE email = %s", (email.lower(),))
+            return cur.fetchone()
 
 # --- Auth: register (student or parent) ---
 @parent_bp.route("/auth/register", methods=["POST"])
@@ -56,22 +52,21 @@ def register():
         share_code = secrets.token_urlsafe(6)
 
     try:
-        with conn.cursor() as cur:
-            cur.execute(
-                """
-                INSERT INTO users (name, email, password_hash, role, children, classes, grades, share_code)
-                VALUES (%s, %s, %s, %s, %s, %s, %s, %s)
-                RETURNING id, share_code;
-                """,
-                (name, email, pwd_hash, role, children, classes, grades, share_code),
-            )
-            new_user = cur.fetchone()
-            conn.commit()
+        with get_conn() as conn:
+            with conn.cursor() as cur:
+                cur.execute(
+                    """
+                    INSERT INTO users (name, email, password_hash, role, children, classes, grades, share_code)
+                    VALUES (%s, %s, %s, %s, %s, %s, %s, %s)
+                    RETURNING id, share_code;
+                    """,
+                    (name, email, pwd_hash, role, children, classes, grades, share_code),
+                )
+                new_user = cur.fetchone()
+                conn.commit()
         return jsonify({"id": new_user["id"], "share_code": new_user.get("share_code")}), 201
     except Exception as e:
-        conn.rollback()
         return jsonify({"msg": str(e)}), 500
-
 
 # --- Auth Login ---
 @parent_bp.route("/auth/login", methods=["POST"])
@@ -86,7 +81,6 @@ def login():
 
     access_token = create_access_token(identity=user["id"])
     return jsonify({"access_token": access_token, "role": user["role"]})
-
 
 # --- Parent: associate to a child using student id + share_code ---
 @parent_bp.route("/parents/associate", methods=["POST"])
@@ -109,4 +103,18 @@ def associate_child():
     if not student or student.get("role") != "student":
         return jsonify({"msg": "Student not found"}), 404
     if student.get("share_code") != share_code:
-        return jsonify({""})
+        return jsonify({"msg": "Share code does not match"}), 400
+
+    # Implementation for associating the child would go here
+
+    return jsonify({"msg": "Child associated"}), 200
+
+# --- Parent: dashboard ---
+@parent_bp.route("/dashboard")
+def parent_dashboard():
+    # Example: fetch data about children, assignments, etc.
+    children = [
+        {"name": "Alice", "grade": 5, "classes": ["Math", "Science"]},
+        {"name": "Bob", "grade": 3, "classes": ["English", "Art"]}
+    ]
+    return render_template("parent_dashboard.html", children=children)

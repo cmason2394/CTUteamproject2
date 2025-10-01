@@ -1,7 +1,7 @@
 import os
 import psycopg2
 import psycopg2.extras
-from flask import Flask, request, jsonify
+from flask import Flask, request, jsonify, render_template
 from flask_jwt_extended import JWTManager
 from src.data_access.database import get_conn
 from .parent_access import parent_bp
@@ -9,10 +9,15 @@ from .parent_access import parent_bp
 app = Flask(__name__)
 
 # PostgreSQL connection
-conn = get_conn()
+# conn = get_conn()
 
 app.config['JWT_SECRET_KEY'] = os.getenv('JWT_SECRET_KEY', 'change-me-in-prod')
 jwt = JWTManager(app)
+
+# root route for UI
+@app.route("/")
+def home():
+    return render_template("login.html")
 
 # Register blueprint
 app.register_blueprint(parent_bp, url_prefix="/api")
@@ -56,6 +61,10 @@ def update_class_assignment(id):
         conn.rollback()
         return jsonify({"error": str(e)}), 500
 
+# list all registered routes for debugging
+print("\nRegistered routes:")
+for rule in app.url_map.iter_rules():
+    print(f"{rule} -> {rule.endpoint}")
 
 if __name__ == "__main__":
     # run with: python app.py
