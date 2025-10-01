@@ -29,13 +29,15 @@ def user_by_email(email):
 @parent_bp.route("/auth/register", methods=["POST"])
 def register():
     data = request.get_json() or {}
-    name = data.get("name")
+    first_name = data.get("first_name")
+    last_name = data.get("last_name")
     email = (data.get("email") or "").lower()
     password = data.get("password")
-    role = data.get("role", "parent")  # Default parent
 
-    if not (name and email and password):
-        return jsonify({"msg": "name, email, password required"}), 400
+    if not (first_name and last_name and email and password):
+        return jsonify({"msg": "first_name, last_name, email, and password required"}), 400
+
+    role = data.get("role", "parent")  # Default parent
 
     if user_by_email(email):
         return jsonify({"msg": "email already registered"}), 400
@@ -60,7 +62,7 @@ def register():
                     VALUES (%s, %s, %s, %s, %s, %s, %s, %s)
                     RETURNING id, share_code;
                     """,
-                    (name, email, pwd_hash, role, children, classes, grades, share_code),
+                    (first_name, last_name, email, pwd_hash, role, children, classes, grades, share_code),
                 )
                 new_user = cur.fetchone()
                 conn.commit()
